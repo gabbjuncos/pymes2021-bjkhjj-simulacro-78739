@@ -25,7 +25,12 @@ export class ContactosComponent implements OnInit {
     L: '(Listado)',
   };
   AccionABMC = 'L'; // inicialmente inicia en el Listado de articulos (buscar con parametros)
+  Mensajes = {
+    SD: ' No se encontraron registros...',
+    RD: ' Revisar los datos ingresados...',
+  };
   Items: Contacto[] = null;
+  Pagina = 1; // inicia pagina 1
   submitted = false;
   FormBusqueda: FormGroup;
   FormRegistro: FormGroup;
