@@ -25,32 +25,21 @@ export class ContactosComponent implements OnInit {
     L: '(Listado)',
   };
   AccionABMC = 'L'; // inicialmente inicia en el Listado de articulos (buscar con parametros)
-  Mensajes = {
-    SD: ' No se encontraron registros...',
-    RD: ' Revisar los datos ingresados...',
-  };
-
   Items: Contacto[] = null;
-  RegistrosTotal: number;
-
-  Pagina = 1; // inicia pagina 1
-
-  // opciones del combo activo
+  submitted = false;
   FormBusqueda: FormGroup;
   FormRegistro: FormGroup;
-  submitted = false;
 
   constructor(
     //private articulosService: MockArticulosService,
     //private articulosFamiliasService: MockArticulosFamiliasService,
-    private contactosService: ContactosService,
     private formBuilder: FormBuilder,
+    private contactosService: ContactosService,
     private modalDialogService: ModalDialogService
   ) {}
 
   ngOnInit() {
     this.FormRegistro = this.formBuilder.group({
-      IdContacto: [0],
       Nombre: [
         '',
         [
@@ -60,7 +49,7 @@ export class ContactosComponent implements OnInit {
         ],
       ],
 
-      FechaAlta: [
+      FechaNacimiento: [
         '',
         [
           Validators.required,
