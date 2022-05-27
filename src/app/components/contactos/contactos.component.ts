@@ -1,11 +1,13 @@
 import { Component, ElementRef, OnInit } from '@angular/core';
-import { Articulo } from '../../models/articulo';
-import { ArticuloFamilia } from '../../models/articulo-familia';
-import { MockArticulosService } from '../../services/mock-articulos.service';
-import { MockArticulosFamiliasService } from '../../services/mock-articulos-familias.service';
-import { ArticulosService } from '../../services/articulos.service';
-import { ArticulosFamiliasService } from '../../services/articulos-familias.service';
-import { FormGroup, FormControl, Validators } from '@angular/forms';
+import { Contacto } from '../../models/contacto';
+
+import { ContactosService } from '../../services/contactos.service';
+import {
+  FormGroup,
+  FormControl,
+  FormBuilder,
+  Validators,
+} from '@angular/forms';
 import { ModalDialogService } from '../../services/modal-dialog.service';
 
 @Component({
@@ -28,105 +30,60 @@ export class ContactosComponent implements OnInit {
     RD: ' Revisar los datos ingresados...',
   };
 
-  Items: Articulo[] = null;
+  Items: Contacto[] = null;
   RegistrosTotal: number;
-  Familias: ArticuloFamilia[] = [];
 
   Pagina = 1; // inicia pagina 1
 
   // opciones del combo activo
-  OpcionesActivo = [
-    { Id: null, Nombre: '' },
-    { Id: true, Nombre: 'SI' },
-    { Id: false, Nombre: 'NO' },
-  ];
-
-  FormBusqueda = new FormGroup({
-    Nombre: new FormControl(null),
-    Activo: new FormControl(null),
-  });
-
-  FormRegistro = new FormGroup({
-    IdArticulo: new FormControl(0),
-    Nombre: new FormControl('', [
-      Validators.required,
-      Validators.minLength(4),
-      Validators.maxLength(55),
-    ]),
-    Precio: new FormControl(null, [
-      Validators.required,
-      Validators.pattern('[0-9]{1,7}'),
-    ]),
-    Stock: new FormControl(null, [
-      Validators.required,
-      Validators.pattern('[0-9]{1,7}'),
-    ]),
-    CodigoDeBarra: new FormControl('', [
-      Validators.required,
-      Validators.pattern('[0-9]{13}'),
-    ]),
-    IdArticuloFamilia: new FormControl('', [Validators.required]),
-    FechaAlta: new FormControl('', [
-      Validators.required,
-      Validators.pattern(
-        '(0[1-9]|[12][0-9]|3[01])[-/](0[1-9]|1[012])[-/](19|20)[0-9]{2}'
-      ),
-    ]),
-    Activo: new FormControl(true),
-  });
-
+  FormBusqueda: FormGroup;
+  FormRegistro: FormGroup;
   submitted = false;
 
   constructor(
     //private articulosService: MockArticulosService,
     //private articulosFamiliasService: MockArticulosFamiliasService,
-    private articulosService: ArticulosService,
-    private articulosFamiliasService: ArticulosFamiliasService,
+    private contactosService: ContactosService,
+    private formBuilder: FormBuilder,
     private modalDialogService: ModalDialogService
   ) {}
 
   ngOnInit() {
-    // this.FormBusqueda = this.formBuilder.group({
-    //   Nombre: [''],
-    //   Activo: [null]
-    // });
-    // this.FormRegistro = this.formBuilder.group({
-    //   IdArticulo: [0],
-    //   Nombre: [
-    //     '',
-    //     [Validators.required, Validators.minLength(4), Validators.maxLength(55)]
-    //   ],
-    //   Precio: [null, [Validators.required, Validators.pattern('[0-9]{1,7}')]],
-    //   Stock: [null, [Validators.required, Validators.pattern('[0-9]{1,7}')]],
-    //   CodigoDeBarra: [
-    //     '',
-    //     [Validators.required, Validators.pattern('[0-9]{13}')]
-    //   ],
-    //   IdArticuloFamilia: ['', [Validators.required]],
-    //   FechaAlta: [
-    //     '',
-    //     [
-    //       Validators.required,
-    //       Validators.pattern(
-    //         '(0[1-9]|[12][0-9]|3[01])[-/](0[1-9]|1[012])[-/](19|20)[0-9]{2}'
-    //       )
-    //     ]
-    //   ],
-    //   Activo: [true]
-    // });
+    this.FormRegistro = this.formBuilder.group({
+      IdContacto: [0],
+      Nombre: [
+        '',
+        [
+          Validators.required,
+          Validators.minLength(4),
+          Validators.maxLength(55),
+        ],
+      ],
 
-    this.GetFamiliasArticulos();
-  }
+      FechaAlta: [
+        '',
+        [
+          Validators.required,
+          Validators.pattern(
+            '(0[1-9]|[12][0-9]|3[01])[-/](0[1-9]|1[012])[-/](19|20)[0-9]{2}'
+          ),
+        ],
+      ],
 
-  GetFamiliasArticulos() {
-    this.articulosFamiliasService.get().subscribe((res: ArticuloFamilia[]) => {
-      this.Familias = res;
+      Telefono: [
+        '',
+        [
+          Validators.required,
+          Validators.minLength(4),
+          Validators.maxLength(55),
+        ],
+      ],
     });
   }
 
   Agregar() {
     this.AccionABMC = 'A';
-    this.FormRegistro.reset({ Activo: true, IdArticulo: 0 });
+    this.FormRegistro.reset({ Activo: true });
     this.submitted = false;
     //this.FormRegistro.markAsPristine();  // incluido en el reset
     //this.FormRegistro.markAsUntouched(); // incluido en el reset
@@ -134,28 +91,21 @@ export class ContactosComponent implements OnInit {
 
   // Buscar segun los filtros, establecidos en FormRegistro
   Buscar() {
-    this.articulosService
-      .get(
-        this.FormBusqueda.value.Nombre,
-        this.FormBusqueda.value.Activo,
-        this.Pagina
-      )
-      .subscribe((res: any) => {
-        this.Items = res.Items;
-        this.RegistrosTotal = res.RegistrosTotal;
-      });
+    this.contactosService.get().subscribe((res: any) => {
+      this.Items = res;
+    });
   }
 
   // Obtengo un registro especifico según el Id
   BuscarPorId(Item, AccionABMC) {
     window.scroll(0, 0); // ir al incio del scroll
 
-    this.articulosService.getById(Item.IdArticulo).subscribe((res: any) => {
+    this.contactosService.getById(Item.IdContacto).subscribe((res: any) => {
       this.FormRegistro.patchValue(res);
 
       //formatear fecha de  ISO 8061 a string dd/MM/yyyy
-      var arrFecha = res.FechaAlta.substr(0, 10).split('-');
-      this.FormRegistro.controls.FechaAlta.patchValue(
+      var arrFecha = res.FechaNacimiento.substr(0, 10).split('-');
+      this.FormRegistro.controls.FechaNacimiento.patchValue(
         arrFecha[2] + '/' + arrFecha[1] + '/' + arrFecha[0]
       );
 
@@ -165,19 +115,6 @@ export class ContactosComponent implements OnInit {
 
   Consultar(Item) {
     this.BuscarPorId(Item, 'C');
-  }
-
-  // comienza la modificacion, luego la confirma con el metodo Grabar
-  Modificar(Item) {
-    if (!Item.Activo) {
-      this.modalDialogService.Alert(
-        'No puede modificarse un registro Inactivo.'
-      );
-      return;
-    }
-    this.submitted = false;
-    this.FormRegistro.markAsUntouched();
-    this.BuscarPorId(Item, 'M');
   }
 
   // grabar tanto altas como modificaciones
@@ -192,9 +129,9 @@ export class ContactosComponent implements OnInit {
     const itemCopy = { ...this.FormRegistro.value };
 
     //convertir fecha de string dd/MM/yyyy a ISO para que la entienda webapi
-    var arrFecha = itemCopy.FechaAlta.substr(0, 10).split('/');
+    var arrFecha = itemCopy.FechaNacimiento.substr(0, 10).split('/');
     if (arrFecha.length == 3)
-      itemCopy.FechaAlta = new Date(
+      itemCopy.FechaNacimiento = new Date(
         arrFecha[2],
         arrFecha[1] - 1,
         arrFecha[0]
@@ -202,38 +139,21 @@ export class ContactosComponent implements OnInit {
 
     // agregar post
     if (this.AccionABMC == 'A') {
-      this.articulosService.post(itemCopy).subscribe((res: any) => {
+      this.contactosService.post(itemCopy).subscribe((res: any) => {
         this.Volver();
         this.modalDialogService.Alert('Registro agregado correctamente.');
         this.Buscar();
       });
     } else {
       // modificar put
-      this.articulosService
-        .put(itemCopy.IdArticulo, itemCopy)
+      this.contactosService
+        .put(itemCopy.IdContacto, itemCopy)
         .subscribe((res: any) => {
           this.Volver();
           this.modalDialogService.Alert('Registro modificado correctamente.');
           this.Buscar();
         });
     }
-  }
-
-  // representa la baja logica
-  ActivarDesactivar(Item) {
-    this.modalDialogService.Confirm(
-      'Esta seguro de ' +
-        (Item.Activo ? 'desactivar' : 'activar') +
-        ' este registro?',
-      undefined,
-      undefined,
-      undefined,
-      () =>
-        this.articulosService
-          .delete(Item.IdArticulo)
-          .subscribe((res: any) => this.Buscar()),
-      null
-    );
   }
 
   // Volver/Cancelar desde Agregar/Modificar/Consultar
@@ -243,10 +163,5 @@ export class ContactosComponent implements OnInit {
 
   ImprimirListado() {
     this.modalDialogService.Alert('Sin desarrollar...');
-  }
-
-  GetArticuloFamiliaNombre(Id) {
-    var Nombre = this.Familias.find((x) => x.IdArticuloFamilia === Id)?.Nombre;
-    return Nombre;
   }
 }
